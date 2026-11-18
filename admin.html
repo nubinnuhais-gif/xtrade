@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Xtrade Admin Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem("ts_admin_theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+  :root{--bg:#131015;--side:#0b0a0d;--card:rgba(255,255,255,.065);--card2:rgba(255,255,255,.09);--line:rgba(255,255,255,.09);--text:#f7f2ef;--muted:#aaa09c;--accent:#f4d03f;--accent2:#e8743b;--ok:#c6f27a;--bad:#ff6b5a;--warn:#f4d03f;--r:26px;--font:'Sora',system-ui,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace}
+  :root[data-theme=light]{--bg:#efe6df;--side:#1b1519;--card:rgba(255,255,255,.7);--card2:rgba(60,40,30,.07);--line:rgba(60,40,30,.12);--text:#2a2024;--muted:#7d6e6a;--ok:#4f8f12;--bad:#d9482a;--warn:#b98500;--accent:#d49b00}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:radial-gradient(60vmax 40vmax at 62% -8%,rgba(232,116,59,.38),transparent 60%),radial-gradient(50vmax 40vmax at 100% 100%,rgba(244,208,63,.12),transparent 60%),var(--bg);background-attachment:fixed;color:var(--text);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  input,select,textarea{font:inherit;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:9px 12px;width:100%;outline:none;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+  input[type=checkbox]{width:auto;accent-color:var(--accent)}
+  label{display:grid;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
+  label small{font-weight:400}
+  h1{font-size:22px;font-weight:800;letter-spacing:-.02em} h2{font-size:16px;font-weight:700} h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .muted{color:var(--muted)} .mono{font-family:var(--mono)} .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:10px;font-weight:600;background:var(--card2);border:1px solid var(--line);transition:transform .12s,background .15s,filter .15s;white-space:nowrap}
+  .btn:hover{filter:brightness(1.12)} .btn:active{transform:scale(.97)}
+  .btn{border-radius:999px} .btn.sm{border-radius:999px}
+  .btn.primary{background:linear-gradient(135deg,#f7dc5a,#f08a3c);border-color:transparent;color:#1c1206}
+  .btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+  a.btn{color:inherit;text-decoration:none}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .err{color:var(--bad);font-size:13px;min-height:18px}
+
+  /* trading background art */
+  #bgArt{position:fixed;inset:0;z-index:0;pointer-events:none}
+  #bgArt svg{width:100%;height:100%;display:block}
+  #bgArt .bgDrift{animation:bgdrift 50s ease-in-out infinite alternate}
+  #bgArt .bgFloat{animation:bgfloat 14s ease-in-out infinite alternate}
+  #bgArt .bgPing{transform-box:fill-box;transform-origin:center;animation:bgping 2.4s ease-out infinite}
+  @keyframes bgdrift{to{transform:translateX(-46px)}}
+  @keyframes bgfloat{to{transform:translateY(-26px) rotate(4deg)}}
+  @keyframes bgping{from{transform:scale(1);opacity:.9}to{transform:scale(3.2);opacity:0}}
+  :root[data-theme=light] #bgArt{opacity:.8}
+  @media (prefers-reduced-motion:reduce){#bgArt *{animation:none!important}}
+  #login,#shell{position:relative;z-index:1}
+  /* collapsible sidebar */
+  #shell{transition:grid-template-columns .38s cubic-bezier(.2,.8,.2,1)}
+  #side{transition:opacity .25s,transform .38s cubic-bezier(.2,.8,.2,1),padding .38s,margin .38s}
+  #shell.sb-off{grid-template-columns:0px 1fr}
+  #shell.sb-off #side{opacity:0;pointer-events:none;padding:0;margin:0;border-width:0;transform:translateX(-24px);overflow:hidden;min-width:0}
+  .sbt{width:42px;height:42px;padding:0;border-radius:12px!important;font-size:18px}
+  /* light theme: keep sidebar controls readable, lighter hero strip */
+  #side .btn{color:#e9e1dd;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
+  #side .btn.danger{color:#ff8a7a;border-color:rgba(255,107,90,.45)}
+  :root[data-theme=light] .strip{background:rgba(255,255,255,.6)}
+  :root[data-theme=light] .hero::before{border-color:rgba(60,40,30,.2)}
+  :root[data-theme=light] .card{background:rgba(255,255,255,.72)}
+  :root[data-theme=light] #mbox{background:#fffaf6}
+  :root[data-theme=light] #side .brand b{color:#fff}
+  /* icon-only rail sidebar */
+  #side{width:68px;align-items:center;padding:18px 0;gap:10px;border-radius:34px;z-index:30;overflow:visible}
+  .brand{padding:0 0 10px;justify-content:center}
+  .nav{width:46px;height:46px;padding:0;justify-content:center;border-radius:15px;position:relative}
+  .nav svg{width:22px;height:22px}
+  .nav::after{content:attr(data-tip);position:absolute;left:calc(100% + 14px);top:50%;transform:translateY(-50%) translateX(-6px);padding:6px 11px;border-radius:9px;background:#fff;color:#141116;font-size:12px;font-weight:700;font-family:var(--font);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .nav:hover::after{opacity:1;transform:translateY(-50%)}
+  .nav .dot{position:absolute;top:3px;right:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent2);color:#fff;font:700 10px/17px var(--font);font-style:normal;text-align:center}
+  .sideFoot{align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.09);margin-top:auto;padding-top:14px}
+  a.nav{text-decoration:none}
+  /* splash / loading (same as the platform) */
+  #splash{position:fixed;inset:0;z-index:200;background:radial-gradient(circle at 30% 25%,rgba(124,92,255,.35),transparent 45%),radial-gradient(circle at 75% 80%,rgba(25,240,168,.25),transparent 45%),var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .6s,visibility .6s,transform .6s}
+  #splash.done{opacity:0;visibility:hidden;transform:scale(1.04)}
+  #splash .smark{position:relative;width:88px;height:88px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#1c1206;font-weight:900;font-size:34px;animation:spulse 1.8s ease-in-out infinite;box-shadow:0 8px 24px rgba(232,116,59,.4)}
+  #splash .smark::before{content:"";position:absolute;inset:-14px;border-radius:36px;border:2px solid transparent;border-top-color:var(--accent);border-right-color:var(--accent2);animation:sspin 1.1s linear infinite}
+  @keyframes sspin{to{transform:rotate(360deg)}}
+  @keyframes spulse{50%{transform:scale(1.06)}}
+  #splash h1{font-size:30px;font-weight:800;letter-spacing:-.02em}
+  #splash h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sshimmer 2s linear infinite}
+  @keyframes sshimmer{to{background-position:-200% 0}}
+  .ldBar{width:260px;height:5px;border-radius:3px;background:var(--card2);overflow:hidden}
+  .ldBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .4s ease-out;box-shadow:0 0 14px var(--accent2)}
+  #ldMsg{color:var(--muted);font-size:13px;height:16px}
+  /* login */
+  #login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+  .lBrand{position:relative;overflow:hidden;padding:56px;display:flex;flex-direction:column;justify-content:center;gap:20px;color:#eef0ff;background:radial-gradient(circle at 25% 20%,#8d4521 0,#2b1a18 48%,#0f0c11 100%)}
+  .logo{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-weight:800;font-size:19px;color:#1c1206;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(232,116,59,.45)}
+  .lBrand .logo{width:56px;height:56px;font-size:22px;font-weight:900;animation:lfloat 4s ease-in-out infinite;box-shadow:0 8px 24px rgba(232,116,59,.4)}
+  @keyframes lfloat{50%{transform:translateY(-3px)}}
+  .lBrand h2{font-size:38px;line-height:1.12;max-width:440px;font-weight:800;letter-spacing:-.02em;color:#eef0ff}
+  .lBrand h2 span{background:linear-gradient(90deg,#f7dc5a,#f08a3c);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lBrand ul{list-style:none;display:grid;gap:12px;color:#c4c8ea;max-width:420px;position:relative;z-index:1}
+  .lBrand li{animation:lrise .6s both} .lBrand li:nth-child(2){animation-delay:.1s} .lBrand li:nth-child(3){animation-delay:.2s} .lBrand li:nth-child(4){animation-delay:.3s}
+  @keyframes lrise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .lBrand li::before{content:"✓";color:#1c1206;background:var(--accent);width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:800;margin-right:10px}
+  .lBrand svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:42%;opacity:.5;pointer-events:none}
+  .lBrand svg line,.lBrand svg rect{transform-box:fill-box;transform-origin:center;animation:lflick 3.2s ease-in-out infinite}
+  @keyframes lflick{50%{transform:scaleY(1.35)}}
+  .lForm{display:flex;align-items:center;justify-content:center;padding:32px;background:rgba(19,16,21,.35);backdrop-filter:blur(6px)}
+  :root[data-theme=light] .lForm{background:rgba(255,250,246,.5)}
+  .lCard{width:min(410px,100%);display:grid;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:32px;padding:34px;backdrop-filter:blur(20px);box-shadow:0 30px 80px rgba(0,0,0,.35);animation:lrise .7s .1s cubic-bezier(.2,.8,.2,1) both}
+  .lCard h1{font-size:27px;font-weight:800;letter-spacing:-.02em}
+  .lCard form{display:grid;gap:14px}
+  .lCard .btn{padding:13px;font-size:15px}
+  .pwrap{position:relative} .pwrap input{padding-right:62px} .pwrap button{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px}
+  .note{font-size:12px;color:var(--muted);line-height:1.5}
+
+  /* shell */
+  #shell{display:none;min-height:100vh;grid-template-columns:92px 1fr}
+  #shell.on{display:grid}
+  #side{background:var(--side);border:1px solid rgba(255,255,255,.05);border-radius:32px;margin:16px 0 16px 16px;padding:18px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:16px;height:calc(100vh - 32px)}
+  #side .nav,#side .brand b{color:#e9e1dd} #side .brand small,#side .nav{color:#a89d99}
+  .brand{display:flex;align-items:center;gap:12px;padding:6px 8px 18px} .brand b{font-size:15px;display:block} .brand small{color:var(--muted);font-size:11px}
+  .brand .logo{width:38px;height:38px;border-radius:11px;font-size:14px}
+  .nav{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:16px;color:var(--muted);font-weight:600;text-align:left;width:100%;transition:background .15s,color .15s}
+  .nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .nav:hover{background:var(--card2);color:var(--text)}
+  .nav.on{background:rgba(255,255,255,.13);color:#fff!important} .nav.on svg{color:var(--accent)}
+  .nav .cnt{margin-left:auto;font-size:11px;background:var(--card2);border-radius:20px;padding:1px 8px}
+  .sideFoot{margin-top:auto;display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+  #main{padding:28px clamp(20px,3vw,44px) 60px;max-width:1520px;width:100%;margin:0 auto;min-width:0}
+  #defWarn:not(:empty){margin-bottom:16px}
+  #defWarn>*{margin:0!important}
+  .live svg{margin:auto 0}
+  .live .legend{margin-top:auto}
+  .head{min-height:46px}
+  .head{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+  .head .sp{flex:1}
+  .grid{display:grid;gap:14px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(215px,1fr));margin-bottom:16px}
+  .two{grid-template-columns:1.5fr 1fr;margin-bottom:16px}
+  /* animated dashboard */
+  .dgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+  .dgrid>*{min-width:0;animation:in .55s both;animation-delay:calc(var(--i,0)*70ms)}
+  .s12{grid-column:span 12}.s8{grid-column:span 8}.s7{grid-column:span 7}.s6{grid-column:span 6}.s5{grid-column:span 5}.s4{grid-column:span 4}.s3{grid-column:span 3}
+  .hero{position:relative;overflow:hidden;padding:28px;min-height:300px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,rgba(232,116,59,.34),rgba(255,255,255,.05) 60%)}
+  .hero::before{content:"";position:absolute;right:-90px;top:-90px;width:360px;height:360px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.22);animation:spin 40s linear infinite}
+  .hero::after{content:"";position:absolute;right:-30px;top:-30px;width:240px;height:240px;border-radius:50%;border:1px solid rgba(244,208,63,.35);animation:spin 26s linear infinite reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hero small.eyebrow{color:var(--muted);font-weight:600;letter-spacing:.04em}
+  .hero h2{font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em;max-width:420px;margin:8px 0 14px;position:relative;z-index:1}
+  .hero .btn.white{background:#fff;color:#141116;border-color:transparent;position:relative;z-index:1}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:22px;padding:16px 18px;border-radius:22px;background:rgba(0,0,0,.28);backdrop-filter:blur(10px);position:relative;z-index:1}
+  .strip b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+  .strip small{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+  .strip i{display:block;height:3px;border-radius:3px;margin-top:8px;background:var(--c,var(--accent));transform-origin:left;animation:grow 1.1s .4s both cubic-bezier(.2,.8,.2,1)}
+  @keyframes grow{from{transform:scaleX(0)}}
+  .live{display:flex;flex-direction:column}
+  .live h2,.cardh{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+  .pulse{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:ping 1.8s infinite}
+  @keyframes ping{70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  .chart svg{width:100%;height:auto;display:block;overflow:visible}
+  .chart path.ln{fill:none;stroke-width:2.4;stroke-linecap:round;transition:d .9s cubic-bezier(.2,.8,.2,1)}
+  .chart path.ar{transition:d .9s cubic-bezier(.2,.8,.2,1)}
+  .chart .draw{stroke-dasharray:900;stroke-dashoffset:900;animation:draw 1.6s .3s forwards ease-out}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .chart circle,.chart text{transition:all .9s cubic-bezier(.2,.8,.2,1)}
+  .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;margin-top:6px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+  .latest{display:grid;gap:6px}
+  .latest .big{font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .kcard{position:relative;overflow:hidden}
+  .kcard svg{position:absolute;right:0;bottom:0;width:60%;height:46px;opacity:.9}
+  .kcard svg path{fill:none;stroke:var(--accent);stroke-width:2;transition:d .9s}
+  .kcard small{color:var(--muted);font-weight:600;font-size:12px}
+  .kcard b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;white-space:nowrap}
+  .kcard i{font-style:normal;font-size:12px;color:var(--muted)}
+  .donutw{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .donut{position:relative;width:150px;height:150px;flex:none}
+  .donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .donut circle{fill:none;stroke-width:13;stroke-linecap:butt;transition:stroke-dasharray 1s cubic-bezier(.2,.8,.2,1),stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
+  .donut div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .donut b{font-size:26px;font-weight:800;line-height:1} .donut small{color:var(--muted);font-size:11px}
+  .lgd{display:grid;gap:8px;font-size:13px;flex:1;min-width:140px}
+  .lgd div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .lgd i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px}
+  .hb{display:grid;gap:14px}
+  .hb .r{display:grid;gap:6px}
+  .hb .r>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+  .hb .tr{height:9px;border-radius:9px;background:var(--card2);overflow:hidden}
+  .hb .tr i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+  .cols{display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:8px}
+  .cols .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:2px;position:relative}
+  .cols .c i{display:block;border-radius:6px;height:0;transition:height 1s cubic-bezier(.2,.8,.2,1)}
+  .cols .c span{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted)}
+  .mini td,.mini th{padding:9px 12px}
+  .newrow{animation:flash 1.6s ease-out}
+  @keyframes flash{from{background:color-mix(in srgb,var(--accent) 28%,transparent)}}
+  @media (max-width:1100px){.s8,.s7,.s6,.s5,.s4,.s3{grid-column:span 12}.strip{grid-template-columns:repeat(2,1fr)}}
+  @media (prefers-reduced-motion:reduce){.hero::before,.hero::after,.pulse,.chart .draw{animation:none!important}.chart .draw{stroke-dashoffset:0}}
+  .card{background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:var(--r);padding:20px;animation:in .35s both}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .kpi small{color:var(--muted);font-weight:600;font-size:12px} .kpi b{display:block;white-space:nowrap;font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  .kpi i{font-style:normal;font-size:12px;color:var(--muted)}
+  .bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center} .bar input,.bar select{width:auto;min-width:160px}
+  .tbl{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card);backdrop-filter:blur(18px)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{position:sticky;top:0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:11px 14px;background:var(--card2);white-space:nowrap}
+  td{padding:11px 14px;border-top:1px solid var(--line);white-space:nowrap}
+  tr.click{cursor:pointer} tr.click:hover td{background:var(--card2)}
+  td.n,th.n{text-align:right;font-family:var(--mono)}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:var(--card2)}
+  .badge.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)} .badge.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)} .badge.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+  .sw{position:relative;width:40px;height:23px;border-radius:20px;background:var(--line);transition:background .2s;flex:none;cursor:pointer;display:inline-block}
+  .sw::after{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .2s} .sw.on{background:var(--ok)} .sw.on::after{transform:translateX(17px)}
+  .frow{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line)} .frow:first-of-type{border-top:0}
+  .frow>div:first-child b{display:block;font-size:13.5px} .frow>div:first-child small{color:var(--muted);font-size:12px}
+  .frow input,.frow select{width:150px} .frow input[type=checkbox]{width:auto}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap} .chips label{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;color:var(--text);cursor:pointer}
+  .list .li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13px} .list .li:first-child{border-top:0}
+  .list small{color:var(--muted)}
+  .empty{padding:36px;text-align:center;color:var(--muted)}
+  .pager{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:12px;color:var(--muted);font-size:12px}
+  .warnBox{background:color-mix(in srgb,var(--warn) 14%,transparent);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);color:var(--text);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  .sect{margin-bottom:16px}
+  .sect>h2{margin-bottom:6px}
+
+  /* modal + toast */
+  #modal{position:fixed;inset:0;background:rgba(5,7,15,.6);backdrop-filter:blur(4px);display:none;place-items:center;z-index:50;padding:16px;overflow:auto}
+  #modal.on{display:grid}
+  #mbox{background:#241e22;border:1px solid var(--line);border-radius:18px;padding:24px;width:min(640px,100%);max-height:92vh;overflow:auto;display:grid;gap:14px;animation:in .25s both}
+  #mbox form{display:grid;gap:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+  #toast{position:fixed;right:18px;bottom:18px;display:grid;gap:8px;z-index:80}
+  .t{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:10px;padding:11px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:in .25s both;font-weight:600} .t.bad{border-left-color:var(--bad)}
+
+  @media (max-width:900px){
+    #shell.sb-off #side{display:none}
+    #login{grid-template-columns:1fr} .lBrand{display:none}
+    #shell.on{grid-template-columns:1fr}
+    #side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;gap:4px;padding:10px} .brand{padding:0 8px} .sideFoot{display:none}
+    .nav{width:auto;padding:8px 10px} .nav span.t1{display:none} .nav .cnt{display:none}
+    #main{padding:18px 14px 50px} .two{grid-template-columns:1fr} .row2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<section id="login">
+  <div class="lBrand"><div class="logo">X</div><h2>Admin console for the <span>Xtrade</span> platform</h2>
+    <ul><li>Manage users, balances and access</li><li>Control assets, payouts and limits</li><li>Maintenance mode and announcements</li><li>Audit log of every admin action</li></ul><span id="lDeco"></span></div>
+  <div class="lForm"><div class="lCard">
+    <h1>Admin sign in</h1>
+    <p class="muted" style="margin:0">Restricted area. Authorised administrators only.</p>
+    <form id="lf" novalidate>
+      <label>Username<input id="l_user" autocomplete="username" autofocus></label>
+      <label>Password<span class="pwrap"><input id="l_pass" type="password" autocomplete="current-password"><button type="button" id="l_show">Show</button></span></label>
+      <div class="err" id="l_err" role="alert"></div>
+      <button class="btn primary" id="l_go" type="submit">Sign in</button>
+    </form>
+    <p class="note">Admin credentials are separate from player accounts. This console works on the data stored in this browser. <a href="/" style="color:var(--accent)">Open trading platform</a></p>
+  </div></div>
+</section>
+
+<div id="shell">
+  <aside id="side"></aside>
+  <main id="main"></main>
+</div>
+<div id="modal"><div id="mbox"></div></div>
+<div id="toast"></div>
+<div id="splash">
+  <div class="smark">X</div>
+  <h1><span>X</span>trade</h1>
+  <div class="ldBar"><i id="ldFill"></i></div>
+  <div id="ldMsg">Starting…</div>
+</div>
+
+<script>
+"use strict";
+// =====================================================================
+// constants + helpers
+// =====================================================================
+const KEY="tradesim_db_v2", CFGKEY="tradesim_cfg_v1", AKEY="tradesim_admin_v1", SKEY="ts_admin_session";
+const DEFAULT_USER="admin", DEFAULT_PASS="Admin@2026", IDLE_MS=30*60*1000;
+const ASSETS={"Asia Composite Index":["Index",.85],"EUR/USD":["Forex",.82],"GBP/USD":["Forex",.81],"USD/JPY":["Forex",.80],"Gold":["Commodity",.80],"Tech Index":["Index",.78],"Apple":["Stocks",.76],"Tesla":["Stocks",.74],"Bitcoin":["Crypto",.79]};
+const ALL_DURS=[5,15,30,60,180,300];
+const DEF={maintenance:false,maintMsg:"We are upgrading the platform. Please check back soon.",signup:true,guest:true,banner:"",bannerType:"info",minStake:1,maxStake:10000,startDemo:50000,startPractice:100000,testFundsOn:true,testFunds:10000,depositOn:true,withdrawOn:true,txMax:100000,rfOn:true,rfPerDay:3,rfMaxStake:20,orderOn:true,orderTtl:5,durs:ALL_DURS.slice(),assets:{},cfdOn:true,copyOn:true,cfdStart:10000,cfdMaxLev:2000,cfdMaxLots:100,marginCall:60,stopOut:20};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r2=n=>Math.round(n*100)/100;
+const fmt=n=>(+n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const money=n=>"AED "+fmt(n);
+const dt=t=>t?new Date(t).toLocaleString():"–";
+const fdur=s=>s<60?s+"s":(s/60)+"m";
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+async function hash(s){
+  if(window.crypto&&crypto.subtle){ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("ts:"+s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+  let h=5381; for(const ch of "ts:"+s) h=((h<<5)+h+ch.charCodeAt(0))|0; return "d"+h;
+}
+const readJSON=k=>{ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } };
+const writeJSON=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ toast("Could not save (storage full or blocked)",true); return false; } };
+
+// =====================================================================
+// data layer (shared with the trading platform through localStorage)
+// =====================================================================
+let DB,CFG,A;
+function loadAll(){
+  DB=readJSON(KEY)||{users:{},session:null}; DB.users=DB.users||{}; DB.events=DB.events||[];
+  const c=readJSON(CFGKEY)||{}; CFG={...DEF,...c}; CFG.assets=c.assets||{};
+  A=readJSON(AKEY);
+}
+const saveDB=()=>writeJSON(KEY,DB);
+const saveCfg=()=>writeJSON(CFGKEY,CFG);
+const saveA=()=>writeJSON(AKEY,A);
+function audit(msg){ A.log=A.log||[]; A.log.unshift({t:Date.now(),msg}); if(A.log.length>500) A.log.length=500; saveA(); }
+// fresh read -> change -> write -> redraw (the player tab may have written in between)
+function mutate(fn,msg){ loadAll(); const ok=fn(); if(ok===false) return false; saveDB(); if(msg) audit(msg); return true; }
+async function ensureAdmin(){
+  loadAll();
+  if(!A||!A.user||!A.pass){ A={user:DEFAULT_USER,pass:await hash(DEFAULT_PASS),def:true,log:[]}; saveA(); }
+}
+const users=()=>Object.entries(DB.users).map(([email,u])=>({email,...u}));
+const allTrades=()=>{ const out=[]; for(const [email,u] of Object.entries(DB.users)) for(const t of (u.trades||[])) out.push({...t,email,user:u.name||email}); return out.sort((a,b)=>b.start-a.start); };
+const allTx=()=>{ const out=[]; for(const [email,u] of Object.entries(DB.users)) for(const x of (u.tx||[])) out.push({...x,email,user:u.name||email}); return out.sort((a,b)=>b.time-a.time); };
+
+// =====================================================================
+// ui helpers
+// =====================================================================
+function toast(msg,bad){ const el=document.createElement("div"); el.className="t"+(bad?" bad":""); el.textContent=msg; $("toast").appendChild(el); setTimeout(()=>el.remove(),3200); }
+function modal(html){ $("mbox").innerHTML=html; $("modal").classList.add("on"); }
+function closeModal(){ $("modal").classList.remove("on"); $("mbox").innerHTML=""; }
+const modalOpen=()=>$("modal").classList.contains("on");
+$("modal").addEventListener("mousedown",e=>{ if(e.target.id==="modal") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+function csv(rows,name){
+  const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const blob=new Blob([rows.map(r=>r.map(q).join(",")).join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function download(obj,name){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:"application/json"})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+const IC={
+  dash:'<path d="M4 13h6V4H4zM14 20h6V4h-6zM4 20h6v-3H4z"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',
+  trades:'<path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/>',
+  tx:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/>',
+  assets:'<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>',
+  cfg:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+  log:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',
+  backup:'<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>',
+  acct:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+};
+const PAGES=[["dash","Dashboard"],["users","Users"],["trades","Trades"],["tx","Transactions"],["assets","Assets & payouts"],["cfg","Platform settings"],["log","Activity log"],["backup","Backup & data"],["acct","Admin account"]];
+
+// =====================================================================
+// auth (separate admin credentials, lockout after repeated failures)
+// =====================================================================
+const lockInfo=()=>readJSON("ts_admin_lock")||{n:0,until:0};
+(function(){ let x=0,p=60,t=""; for(let i=0;i<48;i++){ const o=p; p=Math.max(10,Math.min(90,p+(Math.random()-.5)*14)); const up=p>=o, c=up?"#2fbf6b":"#ff4d5e";
+  t+=`<line x1="${x+4}" x2="${x+4}" y1="${Math.min(o,p)-5}" y2="${Math.max(o,p)+5}" stroke="${c}"/><rect x="${x}" width="8" y="${Math.min(o,p)}" height="${Math.max(2,Math.abs(p-o))}" fill="${c}"/>`; x+=12; }
+  document.getElementById("lDeco").outerHTML=`<svg viewBox="0 0 576 100" preserveAspectRatio="none" aria-hidden="true">${t}</svg>`; })();
+$("l_show").onclick=()=>{ const i=$("l_pass"), s=i.type==="password"; i.type=s?"text":"password"; $("l_show").textContent=s?"Hide":"Show"; };
+$("lf").onsubmit=async ev=>{
+  ev.preventDefault(); const err=m=>$("l_err").textContent=m; err("");
+  const lk=lockInfo(); if(Date.now()<lk.until) return err("Too many attempts. Try again in "+Math.ceil((lk.until-Date.now())/1000)+"s.");
+  await ensureAdmin();
+  const ok=$("l_user").value.trim().toLowerCase()===A.user.toLowerCase() && await hash($("l_pass").value)===A.pass;
+  if(!ok){
+    lk.n++; if(lk.n>=5){ lk.until=Date.now()+60000; lk.n=0; err("Too many attempts. Locked for 60 seconds."); } else err("Incorrect username or password.");
+    writeJSON("ts_admin_lock",lk); return;
+  }
+  writeJSON("ts_admin_lock",{n:0,until:0});
+  sessionStorage.setItem(SKEY,String(Date.now())); audit("Admin signed in"); enter();
+};
+function touch(){ sessionStorage.setItem(SKEY,String(Date.now())); }
+function sessionOk(){ const t=+sessionStorage.getItem(SKEY); return t && Date.now()-t<IDLE_MS; }
+function signOut(msg){ sessionStorage.removeItem(SKEY); closeModal(); $("shell").classList.remove("on"); $("login").style.display=""; $("l_pass").value=""; $("l_err").textContent=msg||""; }
+setInterval(()=>{ if($("shell").classList.contains("on") && !sessionOk()) signOut("Session expired. Please sign in again."); },15000);
+["click","keydown"].forEach(ev=>document.addEventListener(ev,()=>{ if($("shell").classList.contains("on")) touch(); }));
+
+// =====================================================================
+// shell + router
+// =====================================================================
+const st={page:"dash",uq:"",uf:"all",tf:{status:"all",asset:"all",q:"",p:0},xf:{type:"all",q:"",p:0},lt:"admin"};
+function enter(){
+  loadAll(); $("login").style.display="none"; $("shell").classList.add("on"); renderSide(); go(st.page);
+}
+const FIC={ext:'<path d="M7 17L17 7M9 7h8v8"/>',theme:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',out:'<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/>'};
+function renderSide(){
+  const open=allTrades().filter(t=>t.status==="open").length, ic=p=>'<svg viewBox="0 0 24 24">'+p+'</svg>';
+  $("side").innerHTML=`<div class="brand" title="Xtrade admin"><div class="logo">X</div></div>`+
+    PAGES.map(([k,l])=>`<button class="nav ${st.page===k?"on":""}" data-act="go" data-p="${k}" data-tip="${l}" aria-label="${l}">${ic(IC[k])}${k==="trades"&&open?`<em class="dot">${open}</em>`:""}</button>`).join("")+
+    `<div class="sideFoot"><a class="nav" href="/" target="_blank" rel="noopener" data-tip="Open platform" aria-label="Open platform">${ic(FIC.ext)}</a><button class="nav" data-act="theme" data-tip="Light / dark" aria-label="Toggle light or dark">${ic(FIC.theme)}</button><button class="nav" data-act="signout" data-tip="Sign out" aria-label="Sign out" style="color:#ff8a7a">${ic(FIC.out)}</button></div>`;
+}
+function go(p){ st.page=p; renderSide(); ({dash:pDash,users:pUsers,trades:pTrades,tx:pTx,assets:pAssets,cfg:pCfg,log:pLog,backup:pBackup,acct:pAcct})[p](); window.scrollTo(0,0); }
+const head=(t,sub,right)=>`<div class="head"><button class="btn sbt" data-act="sb" aria-label="Hide or show the sidebar" title="Hide / show sidebar">☰</button><div><h1>${t}</h1>${sub?`<p class="muted">${sub}</p>`:""}</div><div class="sp"></div>${right||""}</div>`;
+
+function setSb(off){ $("shell").classList.toggle("sb-off",off); try{ localStorage.setItem("ts_admin_sb",off?"1":"0"); }catch(e){} }
+try{ if(localStorage.getItem("ts_admin_sb")==="1") $("shell").classList.add("sb-off"); }catch(e){}
+// trading-themed background art (candles, trend line, volume, currency glyphs), generated once
+function buildBgArt(){
+  let seed=11; const rnd=()=>{ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+  const W=1600,H=900,N=54,st=W/N; let s="";
+  for(let y=100;y<H;y+=100) s+='<line x1="0" x2="'+W+'" y1="'+y+'" y2="'+y+'" style="stroke:var(--text)" opacity=".06"/>';
+  for(let x=0;x<W;x+=160) s+='<line y1="0" y2="'+H+'" x1="'+x+'" x2="'+x+'" style="stroke:var(--text)" opacity=".035"/>';
+  let vol="",c="",line=[],prev=720;
+  for(let i=0;i<N;i++){
+    const y=720-(i/(N-1))*430+(rnd()-.5)*95, x=i*st+st/2, hi=Math.min(prev,y)-rnd()*26, lo=Math.max(prev,y)+rnd()*26, up=y<prev, col=up?"var(--up)":"var(--down)";
+    c+='<line x1="'+x+'" x2="'+x+'" y1="'+hi.toFixed(1)+'" y2="'+lo.toFixed(1)+'" style="stroke:'+col+'" stroke-width="2"/><rect x="'+(x-9)+'" y="'+Math.min(prev,y).toFixed(1)+'" width="18" height="'+Math.max(4,Math.abs(y-prev)).toFixed(1)+'" rx="3" style="fill:'+col+'"/>';
+    vol+='<rect x="'+(x-9)+'" y="'+(H-14-rnd()*80).toFixed(1)+'" width="18" height="90" rx="3" style="fill:'+col+'" opacity=".5"/>';
+    line.push([x,y]); prev=y;
+  }
+  const d=line.map((p,i)=>{ if(!i) return "M"+p[0]+","+p[1].toFixed(1); const m=(line[i-1][0]+p[0])/2; return "C"+m+","+line[i-1][1].toFixed(1)+" "+m+","+p[1].toFixed(1)+" "+p[0]+","+p[1].toFixed(1); }).join(" ");
+  const last=line[line.length-1], G=["$","€","¥","₿","%","£"];
+  s+='<defs><linearGradient id="bgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--accent)" stop-opacity="0"/></linearGradient></defs>';
+  s+='<g class="bgDrift"><path d="'+d+' L'+last[0]+','+H+' L'+line[0][0]+','+H+'Z" fill="url(#bgA)"/><g opacity=".6">'+c+'</g><g opacity=".4">'+vol+'</g>'+
+     '<path d="'+d+'" fill="none" style="stroke:var(--accent)" stroke-width="3" stroke-linecap="round" opacity=".75"/><circle cx="'+last[0]+'" cy="'+last[1].toFixed(1)+'" r="9" style="fill:var(--accent)"/><circle class="bgPing" cx="'+last[0]+'" cy="'+last[1].toFixed(1)+'" r="9" fill="none" style="stroke:var(--accent)" stroke-width="2"/></g>';
+  [[90,170,150],[1240,120,120],[620,330,100],[1380,470,130],[260,520,110],[900,150,90]].forEach((g,i)=>{
+    s+='<text class="bgFloat" x="'+g[0]+'" y="'+g[1]+'" font-size="'+g[2]+'" font-weight="800" style="fill:var(--text);animation-delay:-'+(i*3)+'s" opacity=".07">'+G[i]+'</text>'; });
+  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+s+'</svg>';
+}
+(function(){ const b=document.createElement("div"); b.id="bgArt"; b.innerHTML=buildBgArt(); document.body.prepend(b); })();
+
+// event delegation
+const ACT={
+  sb:()=>setSb(!$("shell").classList.contains("sb-off")),
+  go:d=>go(d.p), theme:()=>{ const t=document.documentElement.dataset.theme==="light"?"dark":"light"; document.documentElement.dataset.theme=t; try{ localStorage.setItem("ts_admin_theme",t); }catch(e){} },
+  signout:()=>{ audit("Admin signed out"); signOut(); },
+  close:()=>closeModal(),
+  user:d=>openUser(d.e), newUser:()=>openNewUser(),
+  suspend:d=>doSuspend(d.e), kick:d=>doKick(d.e), clearHist:d=>doClear(d.e), delUser:d=>doDelete(d.e), resetPw:d=>openResetPw(d.e),
+  refund:d=>doRefund(d.e,d.id), exportUsers:exportUsers, exportTrades:exportTrades,
+  tpage:d=>{ st.tf.p=Math.max(0,st.tf.p+ +d.dir); fillTrades(); }, xpage:d=>{ st.xf.p=Math.max(0,st.xf.p+ +d.dir); fillTx(); },
+  maintQuick:()=>{ mutate(()=>{ CFG=readFresh(); CFG.maintenance=!CFG.maintenance; saveCfg(); },null); audit("Maintenance mode "+(CFG.maintenance?"ON":"OFF")); toast("Maintenance "+(CFG.maintenance?"enabled":"disabled")); pDash(); },
+  saveAssets:saveAssets, saveCfgForm:saveCfgForm, resetCfg:resetCfg, goAcct:()=>go("acct"),
+  exportAll:()=>{ loadAll(); download({db:DB,cfg:CFG,exported:new Date().toISOString()},"xtrade-backup-"+new Date().toISOString().slice(0,10)+".json"); audit("Exported backup"); },
+  wipeUsers:wipeUsers, pickImport:()=>$("impFile").click(),
+  sw:(d,b)=>b.classList.toggle("on"),
+};
+function readFresh(){ const c=readJSON(CFGKEY)||{}; const x={...DEF,...c}; x.assets=c.assets||{}; return x; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-act]"); if(b&&ACT[b.dataset.act]){ if(b.tagName==="A") return; ACT[b.dataset.act](b.dataset,b); } });
+document.addEventListener("submit",e=>{ const f=e.target.closest("[data-form]"); if(f){ e.preventDefault(); FORM[f.dataset.form](f,e.submitter); } });
+// live sync when the player tab writes
+addEventListener("storage",e=>{
+  if(!$("shell").classList.contains("on")||modalOpen()) return;
+  if(e.key===KEY){ loadAll(); renderSide(); ({dash:fillDash,users:fillUsers,trades:fillTrades,tx:fillTx,log:fillLog})[st.page]?.(); }
+});
+
+// =====================================================================
+// dashboard
+// =====================================================================
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function tween(el,to,f){
+  if(!el) return; const from=el._v??0; el._v=to; cancelAnimationFrame(el._r);
+  if(RM||from===to){ el.textContent=f(to); return; }
+  const t0=performance.now();
+  (function step(){ const k=Math.min(1,(performance.now()-t0)/850), e=1-Math.pow(1-k,3); el.textContent=f(from+(to-from)*e); if(k<1) el._r=requestAnimationFrame(step); })();
+}
+const smooth=p=>p.map((q,i)=>{ if(!i) return "M"+q[0].toFixed(1)+","+q[1].toFixed(1); const m=(p[i-1][0]+q[0])/2; return "C"+m.toFixed(1)+","+p[i-1][1].toFixed(1)+" "+m.toFixed(1)+","+q[1].toFixed(1)+" "+q[0].toFixed(1)+","+q[1].toFixed(1); }).join(" ");
+const pts=(arr,W,H,mx,pad)=>arr.map((v,i)=>[i/(arr.length-1)*W,H-pad-(v/mx)*(H-pad*2)]);
+const sigOf=x=>JSON.stringify(x);
+function setHTML(el,sig,html){ if(!el||el._sig===sig) return false; el._sig=sig; el.innerHTML=html; return true; }
+
+function dashData(){
+  const us=users(), real=us.filter(u=>!u.guest), tr=allTrades(), now=Date.now(), closed=tr.filter(t=>t.status!=="open");
+  const d={users:real.length,guests:us.length-real.length,trades:tr.length,open:tr.length-closed.length};
+  const wins=closed.filter(t=>t.status==="win").length, losses=closed.filter(t=>t.status==="loss").length;
+  d.rate=(wins+losses)?wins/(wins+losses)*100:0; d.vol=tr.reduce((x,t)=>x+t.amt,0);
+  d.net=-closed.reduce((x,t)=>x+(t.result||0),0); d.funds=us.reduce((x,u)=>x+Object.values(u.accounts||{}).reduce((p,q)=>p+q,0),0);
+  const m0=Math.floor(now/60000)-19; d.min=Array.from({length:20},()=>({n:0,w:0}));
+  for(const t of tr){ const i=Math.floor(t.start/60000)-m0; if(i>=0&&i<20){ d.min[i].n++; if(t.status==="win") d.min[i].w++; } }
+  d.days=[]; for(let i=13;i>=0;i--) d.days.push({k:new Date(now-i*864e5).toISOString().slice(0,10),w:0,l:0,o:0,v:0});
+  const di=Object.fromEntries(d.days.map((x,i)=>[x.k,i]));
+  for(const t of tr){ const x=d.days[di[new Date(t.start).toISOString().slice(0,10)]]; if(!x) continue; x.v+=t.amt; if(t.status==="win") x.w++; else if(t.status==="loss") x.l++; else x.o++; }
+  d.out={win:wins,loss:losses,tie:tr.filter(t=>t.status==="tie").length,refund:tr.filter(t=>t.status==="refund").length,open:d.open};
+  const ba={}; for(const t of tr){ const a=ba[t.asset]=ba[t.asset]||{n:0,v:0}; a.n++; a.v+=t.amt; }
+  d.assets=Object.entries(ba).sort((p,q)=>q[1].v-p[1].v).slice(0,5);
+  const bp={}; for(const t of tr){ const p=bp[t.email]=bp[t.email]||{name:t.user,email:t.email,n:0,v:0,net:0}; p.n++; p.v+=t.amt; if(t.status!=="open") p.net+=t.result||0; }
+  d.players=Object.values(bp).sort((p,q)=>q.v-p.v).slice(0,5); d.latest=tr.slice(0,6);
+  d.ev=[...DB.events.map(x=>({t:x.t,m:esc(x.msg)+(x.who?" <small>· "+esc(x.who)+"</small>":"")})),...(A.log||[]).map(x=>({t:x.t,m:esc(x.msg)+" <small>· admin</small>"}))].sort((p,q)=>q.t-p.t).slice(0,7);
+  return d;
+}
+function pDash(){
+  loadAll();
+  const kp=[["k0","Registered users",""],["k1","Open trades",""],["k2","Total trades","#sp2"],["k3","Volume staked","#sp3"],["k4","Platform P/L",""],["k5","Funds in play",""]];
+  $("main").innerHTML=head("Dashboard","Live overview, updates automatically",`<button class='btn ${CFG.maintenance?"danger":""}' data-act='maintQuick' id="mBtn"></button>`)+
+  `<div id="defWarn"></div><div class="dgrid" id="dRoot">
+    <section class="card hero s8" style="--i:0"><div><small class="eyebrow">PLATFORM OVERVIEW</small><h2 id="hTitle">Your trading platform at a glance</h2>
+        <p class="muted" id="hSub" style="position:relative;z-index:1;margin-bottom:16px"></p><button class="btn white" data-act="go" data-p="users">Manage users →</button></div>
+      <div class="strip"><div><b id="hUsers">0</b><small>Users</small><i style="--c:#f4d03f"></i></div><div><b id="hTrades">0</b><small>Trades</small><i style="--c:#ff8a5c"></i></div>
+        <div><b id="hVol">0</b><small>Volume (AED)</small><i style="--c:#c6f27a"></i></div><div><b id="hRate">0%</b><small>Player win rate</small><i style="--c:#fff"></i></div></div></section>
+    <section class="card live s4 chart" style="--i:1"><h2><span class="pulse"></span>Live activity</h2><p class="muted" style="font-size:12px;margin:2px 0 8px">Trades per minute, last 20 minutes</p>
+      <svg viewBox="0 0 300 130" id="lv"><defs><linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4d03f" stop-opacity=".35"/><stop offset="1" stop-color="#f4d03f" stop-opacity="0"/></linearGradient></defs>
+        <path id="lvAr" class="ar" fill="url(#gA)"/><path id="lvB" class="ln draw" stroke="#c6f27a" style="opacity:.9"/><path id="lvA" class="ln draw" stroke="#f4d03f"/>
+        <g id="lvDot"><circle id="lvC" r="5" fill="#f4d03f"/><rect id="lvR" rx="9" width="34" height="18" fill="#fff"/><text id="lvT" font-size="11" font-weight="800" text-anchor="middle" fill="#141116"></text></g></svg>
+      <div class="legend"><span><i style="background:#f4d03f"></i>Trades</span><span><i style="background:#c6f27a"></i>Won</span></div></section>
+    ${kp.map((k,i)=>`<section class="card kcard s4" style="--i:${i+2}"><small>${k[1]}</small><b id="${k[0]}">0</b><i id="${k[0]}s">&nbsp;</i>${k[2]?`<svg viewBox="0 0 100 40" preserveAspectRatio="none"><path id="${k[2].slice(1)}"/></svg>`:""}</section>`).join("")}
+    <section class="card s4" style="--i:8"><div class="cardh">Trade outcomes</div><div class="donutw" style="margin-top:14px"><div class="donut"><svg viewBox="0 0 100 100" id="dn"></svg><div><b id="dnT">0</b><small>trades</small></div></div><div class="lgd" id="dnL"></div></div></section>
+    <section class="card s4" style="--i:9"><div class="cardh">Top assets by volume</div><div class="hb" id="hb" style="margin-top:14px"></div></section>
+    <section class="card s4" style="--i:10"><div class="cardh">Latest trade</div><div class="latest" id="lt" style="margin-top:12px"></div></section>
+    <section class="card s8" style="--i:11"><div class="cardh">Trades, last 14 days</div><p class="muted" style="font-size:12px;margin:2px 0 6px"><span class="ok">■</span> won <span class="bad">■</span> lost <span style="color:var(--accent)">■</span> other</p><div class="cols" id="cols" style="margin-bottom:22px"></div></section>
+    <section class="card s4" style="--i:12"><div class="cardh">Platform status</div><div class="list" id="stt" style="margin-top:8px"></div></section>
+    <section class="card s8" style="--i:13"><div class="cardh">Top players</div><div id="pl" style="margin-top:8px"></div></section>
+    <section class="card s4" style="--i:14"><div class="cardh">Recent activity</div><div class="list" id="ev" style="margin-top:8px"></div></section>
+    <section class="card s12" style="--i:15"><div class="cardh">Recent trades</div><div id="rt" style="margin-top:8px;overflow:auto"></div></section></div>`;
+  fillDash();
+}
+function fillDash(){
+  if(!$("dRoot")) return pDash();
+  const d=dashData(), money0=n=>fmt(n), int=n=>Math.round(n).toLocaleString();
+  $("mBtn").textContent=CFG.maintenance?"Maintenance ON · turn off":"Enable maintenance"; $("mBtn").className="btn "+(CFG.maintenance?"danger":"");
+  setHTML($("defWarn"),sigOf(!!A.def),A.def?`<div class="warnBox"><span>You are using the default admin password. Change it now to secure this console.</span><button class="btn sm primary" data-act="goAcct">Change password</button></div>`:"");
+  $("hSub").textContent=`${d.open} trade${d.open===1?"":"s"} live right now · ${d.guests} guest session${d.guests===1?"":"s"} · ${CFG.maintenance?"maintenance mode is ON":"platform is online"}`;
+  tween($("hUsers"),d.users,int); tween($("hTrades"),d.trades,int); tween($("hVol"),d.vol,n=>n>=1e6?(n/1e6).toFixed(2)+"M":n>=1e4?(n/1e3).toFixed(1)+"k":int(n)); tween($("hRate"),d.rate,n=>n.toFixed(0)+"%");
+  // live chart
+  const W=300,H=130,n1=d.min.map(x=>x.n), n2=d.min.map(x=>x.w), mx=Math.max(4,...n1)*1.15, p1=pts(n1,W-14,H,mx,16).map(p=>[p[0]+4,p[1]]), p2=pts(n2,W-14,H,mx,16).map(p=>[p[0]+4,p[1]]);
+  $("lvA").setAttribute("d",smooth(p1)); $("lvB").setAttribute("d",smooth(p2)); $("lvAr").setAttribute("d",smooth(p1)+` L${p1[p1.length-1][0]},${H} L${p1[0][0]},${H}Z`);
+  const e=p1[p1.length-1], v=n1[n1.length-1]; $("lvC").setAttribute("cx",e[0]); $("lvC").setAttribute("cy",e[1]);
+  const rx=Math.min(W-34,e[0]-17), ry=Math.max(0,e[1]-30); $("lvR").setAttribute("x",rx); $("lvR").setAttribute("y",ry); $("lvT").setAttribute("x",rx+17); $("lvT").setAttribute("y",ry+13); $("lvT").textContent=v;
+  // kpis
+  const dayV=d.days.map(x=>x.v), dayN=d.days.map(x=>x.w+x.l+x.o);
+  tween($("k0"),d.users,int); $("k0s").textContent=d.guests+" guest session(s)";
+  tween($("k1"),d.open,int); $("k1s").textContent="live right now";
+  tween($("k2"),d.trades,int); $("k2s").textContent="all time";
+  tween($("k3"),d.vol,n=>"AED "+money0(n)); $("k3s").textContent="all time";
+  tween($("k4"),d.net,n=>(n>=0?"+":"−")+"AED "+money0(Math.abs(n))); $("k4").className=d.net>=0?"ok":"bad"; $("k4s").textContent="net result vs players";
+  tween($("k5"),d.funds,n=>"AED "+money0(n)); $("k5s").textContent="across all accounts";
+  const sp=(id,arr)=>{ const m=Math.max(1,...arr), p=pts(arr,100,40,m,5); $(id).setAttribute("d",smooth(p)); };
+  sp("sp2",dayN); sp("sp3",dayV);
+  // donut
+  const C=2*Math.PI*40, tot=Object.values(d.out).reduce((x,y)=>x+y,0), cols={win:"#c6f27a",loss:"#ff6b5a",tie:"#aaa09c",refund:"#8ab4ff",open:"#f4d03f"}, names={win:"Won",loss:"Lost",tie:"Draw",refund:"Refunded",open:"Open"};
+  if(!$("dn")._built){ $("dn").innerHTML='<circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,.07)"/>'+Object.keys(cols).map(k=>`<circle id="dn_${k}" cx="50" cy="50" r="40" stroke="${cols[k]}" stroke-dasharray="0 ${C}"/>`).join(""); $("dn")._built=true; }
+  let off=0; for(const k of Object.keys(cols)){ const len=tot?d.out[k]/tot*C:0; const el=$("dn_"+k); el.setAttribute("stroke-dasharray",Math.max(0,len-(len>2?1.5:0)).toFixed(2)+" "+C.toFixed(2)); el.setAttribute("stroke-dashoffset",(-off).toFixed(2)); off+=len; }
+  tween($("dnT"),tot,int);
+  setHTML($("dnL"),sigOf(d.out),Object.keys(cols).map(k=>`<div><span><i style="background:${cols[k]}"></i>${names[k]}</span><b>${d.out[k]}</b></div>`).join(""));
+  // assets
+  const mxA=Math.max(1,...d.assets.map(a=>a[1].v));
+  if(setHTML($("hb"),sigOf(d.assets.map(a=>a[0])),d.assets.length?d.assets.map(([nm])=>`<div class="r" data-n="${esc(nm)}"><div><span>${esc(nm)}</span><b class="mono hv"></b></div><div class="tr"><i></i></div></div>`).join(""):'<div class="empty">No trades yet</div>')) {}
+  d.assets.forEach(([nm,a])=>{ const r=[...$("hb").children].find(x=>x.dataset.n===nm); if(!r) return; r.querySelector(".hv").textContent=money(a.v)+" · "+a.n; requestAnimationFrame(()=>requestAnimationFrame(()=>r.querySelector("i").style.width=(a.v/mxA*100)+"%")); });
+  // latest trade
+  const L=d.latest[0];
+  setHTML($("lt"),sigOf(L&&[L.id,L.status]),L?`<small class="muted">${esc(L.user)}</small><div class="big ${L.dir==="up"?"ok":"bad"}">${L.dir==="up"?"↑ Up":"↓ Down"}</div><div>${esc(L.asset)} · ${fdur(L.dur)}</div>
+     <div class="mono">${money(L.amt)}</div><span class="badge ${L.status==="win"?"ok":L.status==="loss"?"bad":L.status==="open"?"warn":""}" style="justify-self:start">${L.status}</span><small class="muted">${dt(L.start)}</small>`:'<div class="empty">No trades yet</div>');
+  // 14-day columns
+  if(!$("cols").children.length) $("cols").innerHTML=d.days.map(x=>`<div class="c"><i data-k="o" style="background:var(--accent)"></i><i data-k="l" style="background:var(--bad)"></i><i data-k="w" style="background:var(--ok)"></i><span>${x.k.slice(8)}</span></div>`).join("");
+  const mxD=Math.max(1,...dayN); [...$("cols").children].forEach((c,i)=>{ const x=d.days[i]; c.title=x.k+": "+(x.w+x.l+x.o)+" trades"; c.querySelectorAll("i").forEach(el=>{ const h=(x[el.dataset.k]/mxD)*140; requestAnimationFrame(()=>requestAnimationFrame(()=>el.style.height=h+"px")); }); });
+  // status
+  setHTML($("stt"),sigOf([CFG.maintenance,CFG.signup,CFG.guest,CFG.depositOn,CFG.withdrawOn,CFG.assets]),`
+    <div class="li"><span>Maintenance mode</span><span class="badge ${CFG.maintenance?"bad":"ok"}">${CFG.maintenance?"ON":"Off"}</span></div>
+    <div class="li"><span>New registrations</span><span class="badge ${CFG.signup?"ok":"warn"}">${CFG.signup?"Open":"Closed"}</span></div>
+    <div class="li"><span>Guest access</span><span class="badge ${CFG.guest?"ok":"warn"}">${CFG.guest?"Allowed":"Blocked"}</span></div>
+    <div class="li"><span>Deposits / withdrawals</span><span class="badge ${CFG.depositOn&&CFG.withdrawOn?"ok":"warn"}">${CFG.depositOn?"Dep":"–"} · ${CFG.withdrawOn?"Wdr":"–"}</span></div>
+    <div class="li"><span>Active assets</span><b>${Object.keys(ASSETS).filter(k=>(CFG.assets[k]||{}).on!==false).length} / ${Object.keys(ASSETS).length}</b></div>`);
+  setHTML($("pl"),sigOf(d.players),d.players.length?`<div class="tbl" style="border:0;background:none"><table class="mini"><thead><tr><th>Player</th><th class="n">Trades</th><th class="n">Staked</th><th class="n">Net</th></tr></thead><tbody>${d.players.map(p=>`<tr class="click" data-act="user" data-e="${esc(p.email)}"><td><b>${esc(p.name)}</b><br><small class="muted">${esc(p.email)}</small></td><td class="n">${p.n}</td><td class="n">${fmt(p.v)}</td><td class="n ${p.net>=0?"ok":"bad"}">${p.net>=0?"+":"−"}${fmt(Math.abs(p.net))}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No players have traded yet</div>');
+  setHTML($("ev"),sigOf(d.ev),d.ev.length?d.ev.map(x=>`<div class="li"><span>${x.m}</span><small>${dt(x.t)}</small></div>`).join(""):'<div class="empty">Nothing yet</div>');
+  setHTML($("rt"),sigOf(d.latest.map(t=>[t.id,t.status])),d.latest.length?`<table class="mini"><thead><tr><th>Time</th><th>Player</th><th>Asset</th><th>Side</th><th class="n">Stake</th><th>Status</th><th class="n">Result</th></tr></thead><tbody>${d.latest.map((t,i)=>`<tr class="${i===0?"newrow":""}"><td>${dt(t.start)}</td><td>${esc(t.user)}</td><td>${esc(t.asset)}</td><td class="${t.dir==="up"?"ok":"bad"}">${t.dir==="up"?"↑ Up":"↓ Down"}</td><td class="n">${fmt(t.amt)}</td><td><span class="badge ${t.status==="win"?"ok":t.status==="loss"?"bad":t.status==="open"?"warn":""}">${t.status}</span></td><td class="n ${t.result>0?"ok":t.result<0?"bad":""}">${t.status==="open"?"…":(t.result>0?"+":"")+fmt(t.result)}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">No trades yet</div>');
+}
+// keep the dashboard live (the player tab may be trading in another window)
+setInterval(()=>{ if(st.page==="dash"&&$("shell").classList.contains("on")&&!modalOpen()&&!document.hidden){ loadAll(); renderSide(); fillDash(); } },3000);
+
+// =====================================================================
+// users
+// =====================================================================
+function pUsers(){
+  loadAll();
+  $("main").innerHTML=head("Users","Manage player accounts, balances and access",`<button class="btn" data-act="exportUsers">Export CSV</button><button class="btn primary" data-act="newUser">+ New user</button>`)+
+    `<div class="bar"><input id="uq" placeholder="Search name or email" value="${esc(st.uq)}"><select id="uf"><option value="all">All users</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="guest">Guests</option></select></div><div id="body"></div>`;
+  $("uf").value=st.uf; $("uq").oninput=e=>{ st.uq=e.target.value; fillUsers(); }; $("uf").onchange=e=>{ st.uf=e.target.value; fillUsers(); };
+  fillUsers();
+}
+function userRows(){
+  const q=st.uq.trim().toLowerCase();
+  return users().filter(u=>(!q||u.email.toLowerCase().includes(q)||(u.name||"").toLowerCase().includes(q))&&
+    (st.uf==="all"||(st.uf==="guest"?u.guest:st.uf==="suspended"?u.suspended:(!u.suspended&&!u.guest)))).sort((a,b)=>(b.created||0)-(a.created||0));
+}
+function fillUsers(){
+  const b=$("body"); if(!b) return; const rows=userRows();
+  b.innerHTML=rows.length?`<div class="tbl"><table><thead><tr><th>User</th><th>Status</th><th class="n">Demo</th><th class="n">Practice</th><th class="n">Trades</th><th>Joined</th></tr></thead><tbody>`+
+    rows.map(u=>`<tr class="click" data-act="user" data-e="${esc(u.email)}"><td><b>${esc(u.name||"–")}</b><br><small class="muted">${esc(u.email)}</small></td>
+      <td>${u.suspended?'<span class="badge bad">Suspended</span>':u.guest?'<span class="badge warn">Guest</span>':'<span class="badge ok">Active</span>'}</td>
+      <td class="n">${fmt(u.accounts?.demo)}</td><td class="n">${fmt(u.accounts?.practice)}</td><td class="n">${(u.trades||[]).length}</td><td>${dt(u.created)}</td></tr>`).join("")+`</tbody></table></div>`
+    :'<div class="card empty">No users match.</div>';
+}
+function exportUsers(){ loadAll(); csv([["email","name","status","demo","practice","trades","joined"],...users().map(u=>[u.email,u.name,u.suspended?"suspended":u.guest?"guest":"active",u.accounts?.demo,u.accounts?.practice,(u.trades||[]).length,dt(u.created)])],"users.csv"); }
+function openUser(email){
+  loadAll(); const u=DB.users[email]; if(!u) return toast("User not found",true);
+  const tr=(u.trades||[]).slice(0,6), tx=(u.tx||[]).slice(0,5), s=(u.trades||[]).filter(t=>t.status!=="open"), net=r2(s.reduce((a,t)=>a+(t.result||0),0));
+  const e=esc(email);
+  modal(`<div style="display:flex;justify-content:space-between;gap:12px"><div><h2>${esc(u.name||"–")}</h2><p class="muted">${e} · joined ${dt(u.created)}</p></div>
+      <div>${u.suspended?'<span class="badge bad">Suspended</span>':u.guest?'<span class="badge warn">Guest</span>':'<span class="badge ok">Active</span>'}</div></div>
+    <div class="row2"><div class="card kpi" style="padding:12px"><small>Demo balance</small><b style="font-size:20px">${money(u.accounts?.demo)}</b></div><div class="card kpi" style="padding:12px"><small>Practice balance</small><b style="font-size:20px">${money(u.accounts?.practice)}</b></div></div>
+    <p class="muted">${(u.trades||[]).length} trades · net result <b class="${net>=0?"ok":"bad"}">${net>=0?"+":"−"}${money(Math.abs(net))}</b></p>
+    <form data-form="adjust" data-e="${e}"><h3>Adjust balance</h3>
+      <div class="row2"><label>Account<select name="acct"><option value="demo">Demo</option><option value="practice">Practice</option></select></label><label>Amount, AED<input name="amt" inputmode="decimal" placeholder="e.g. 500"></label></div>
+      <label>Reason (saved in the audit log)<input name="why" placeholder="e.g. Promotional credit"></label>
+      <div class="err" id="m_err"></div>
+      <div class="acts"><button class="btn primary" type="submit" name="mode" value="add">Add funds</button><button class="btn" type="submit" name="mode" value="sub">Deduct</button><button class="btn" type="submit" name="mode" value="set">Set exact balance</button></div></form>
+    <h3>Actions</h3><div class="acts">
+      <button class="btn" data-act="suspend" data-e="${e}">${u.suspended?"Reactivate account":"Suspend account"}</button>
+      ${u.guest?"":`<button class="btn" data-act="resetPw" data-e="${e}">Reset password</button>`}
+      <button class="btn" data-act="kick" data-e="${e}">Force log out</button>
+      <button class="btn" data-act="clearHist" data-e="${e}">Clear history</button>
+      <button class="btn danger" data-act="delUser" data-e="${e}">Delete user</button></div>
+    <h3>Recent trades</h3>${tr.length?`<div class="list">${tr.map(t=>`<div class="li"><span>${esc(t.asset)} · ${t.dir==="up"?"↑":"↓"} ${fdur(t.dur)}<br><small>${dt(t.start)}</small></span><span style="text-align:right">${money(t.amt)}<br><small class="${t.status==="win"?"ok":t.status==="loss"?"bad":""}">${t.status}${t.status==="open"?"":" "+(t.result>0?"+":"")+fmt(t.result)}</small></span></div>`).join("")}</div>`:'<p class="muted">No trades.</p>'}
+    <h3>Recent transactions</h3>${tx.length?`<div class="list">${tx.map(x=>`<div class="li"><span>${esc(x.type)} · ${esc(x.acct)}<br><small>${dt(x.time)}${x.note?" · "+esc(x.note):""}</small></span><b class="${x.amt>=0?"ok":"bad"}">${x.amt>=0?"+":"−"}${money(Math.abs(x.amt))}</b></div>`).join("")}</div>`:'<p class="muted">None.</p>'}
+    <div class="acts" style="justify-content:flex-end"><button class="btn" data-act="close">Close</button></div>`);
+}
+const FORM={
+  adjust(f,sub){
+    const email=f.dataset.e, mode=(sub&&sub.value)||"add", err=m=>$("m_err").textContent=m;
+    const amt=r2(parseFloat(f.amt.value)), acct=f.acct.value, why=f.why.value.trim();
+    if(!(amt>=0)||(mode!=="set"&&!(amt>0))) return err("Enter a valid amount.");
+    if(!why) return err("Please give a reason.");
+    let msg="", bad="";
+    mutate(()=>{ const u=DB.users[email]; if(!u){ bad="User not found."; return false; }
+      u.accounts=u.accounts||{demo:0,practice:0}; const cur=u.accounts[acct]||0;
+      const nv=mode==="add"?cur+amt:mode==="sub"?cur-amt:amt;
+      if(nv<0){ bad="Balance cannot go below zero."; return false; }
+      u.accounts[acct]=r2(nv); (u.tx=u.tx||[]).unshift({id:uid(),type:"adjust",amt:r2(nv-cur),acct,note:"Admin: "+why,time:Date.now()});
+      msg=`Balance ${mode==="set"?"set":mode==="add"?"credited":"debited"}: ${email} ${acct} ${cur.toFixed(2)} → ${r2(nv).toFixed(2)} (${why})`; });
+    if(bad) return err(bad);
+    audit(msg); toast("Balance updated"); openUser(email); renderSide();
+    if(st.page==="users") fillUsers();
+  },
+  newUser:async f=>{
+    const err=m=>$("m_err").textContent=m, email=f.email.value.trim().toLowerCase(), name=f.name.value.trim(), pw=f.pw.value;
+    if(!name) return err("Enter a name."); if(!/^\S+@\S+\.\S+$/.test(email)) return err("Enter a valid email."); if(pw.length<6) return err("Password needs 6+ characters.");
+    loadAll(); if(DB.users[email]) return err("That email already exists.");
+    const h=await hash(pw);
+    mutate(()=>{ DB.users[email]={email,name,pass:h,guest:false,suspended:false,created:Date.now(),acct:"demo",accounts:{demo:+f.demo.value||CFG.startDemo,practice:+f.practice.value||CFG.startPractice},tx:[],trades:[],pending:[],settings:{sound:true,amt:4,dur:0},rf:{date:"",used:0}}; },"Created user "+email);
+    toast("User created"); closeModal(); go("users");
+  },
+  resetPw:async f=>{
+    const email=f.dataset.e, pw=f.pw.value; if(pw.length<6) return $("m_err").textContent="Password needs 6+ characters.";
+    const h=await hash(pw); mutate(()=>{ if(!DB.users[email]) return false; DB.users[email].pass=h; },"Reset password for "+email);
+    toast("Password reset"); openUser(email);
+  },
+  cfg(f){ saveCfgForm(); },
+};
+function openNewUser(){
+  modal(`<h2>New user</h2><form data-form="newUser"><label>Name<input name="name"></label><label>Email<input name="email" type="email"></label><label>Password<input name="pw" type="text" value=""></label>
+    <div class="row2"><label>Demo balance<input name="demo" inputmode="decimal" placeholder="${CFG.startDemo}"></label><label>Practice balance<input name="practice" inputmode="decimal" placeholder="${CFG.startPractice}"></label></div>
+    <div class="err" id="m_err"></div><div class="acts"><button class="btn primary" type="submit">Create user</button><button class="btn" type="button" data-act="close">Cancel</button></div></form>`);
+}
+function openResetPw(email){
+  modal(`<h2>Reset password</h2><p class="muted">${esc(email)}</p><form data-form="resetPw" data-e="${esc(email)}"><label>New password<input name="pw" type="text" autocomplete="off"></label><div class="err" id="m_err"></div>
+    <div class="acts"><button class="btn primary" type="submit">Set password</button><button class="btn" type="button" data-act="user" data-e="${esc(email)}">Back</button></div></form>`);
+}
+function doSuspend(email){ let now; mutate(()=>{ const u=DB.users[email]; if(!u) return false; u.suspended=!u.suspended; now=u.suspended; if(now&&DB.session===email) DB.session=null; },null); audit((now?"Suspended ":"Reactivated ")+email); toast(now?"User suspended":"User reactivated"); openUser(email); if(st.page==="users") fillUsers(); }
+function doKick(email){ mutate(()=>{ if(DB.session===email) DB.session=null; else return false; },null); audit("Forced log out of "+email); toast("Session ended (if active)"); }
+function doClear(email){
+  if(!confirm("Clear all trades and transactions for this user? Open trade and order stakes are refunded.")) return;
+  mutate(()=>{ const u=DB.users[email]; if(!u) return false; for(const t of u.trades||[]) if(t.status==="open") u.accounts[t.acct]=r2(u.accounts[t.acct]+t.amt); for(const o of u.pending||[]) u.accounts[o.acct]=r2(u.accounts[o.acct]+o.amt); u.trades=[]; u.pending=[]; u.tx=[]; },null);
+  audit("Cleared history of "+email); toast("History cleared"); openUser(email);
+}
+function doDelete(email){
+  if(!confirm("Permanently delete "+email+"? This cannot be undone.")) return;
+  mutate(()=>{ if(!DB.users[email]) return false; delete DB.users[email]; if(DB.session===email) DB.session=null; },null);
+  audit("Deleted user "+email); toast("User deleted"); closeModal(); renderSide(); if(st.page==="users") fillUsers();
+}
+
+// =====================================================================
+// trades + transactions
+// =====================================================================
+const PER=40;
+function pTrades(){
+  loadAll();
+  $("main").innerHTML=head("Trades","Every trade placed on the platform",`<button class="btn" data-act="exportTrades">Export CSV</button>`)+
+    `<div class="bar"><input id="tq" placeholder="Search user" value="${esc(st.tf.q)}"><select id="ts"><option value="all">All statuses</option><option value="open">Open</option><option value="win">Won</option><option value="loss">Lost</option><option value="tie">Draw</option><option value="refund">Refunded</option></select>
+    <select id="ta"><option value="all">All assets</option>${Object.keys(ASSETS).map(a=>`<option>${esc(a)}</option>`).join("")}</select></div><div id="body"></div>`;
+  $("ts").value=st.tf.status; $("ta").value=st.tf.asset;
+  $("tq").oninput=e=>{ st.tf.q=e.target.value; st.tf.p=0; fillTrades(); }; $("ts").onchange=e=>{ st.tf.status=e.target.value; st.tf.p=0; fillTrades(); }; $("ta").onchange=e=>{ st.tf.asset=e.target.value; st.tf.p=0; fillTrades(); };
+  fillTrades();
+}
+const tradeRows=()=>{ const q=st.tf.q.trim().toLowerCase(); return allTrades().filter(t=>(st.tf.status==="all"||t.status===st.tf.status)&&(st.tf.asset==="all"||t.asset===st.tf.asset)&&(!q||t.email.toLowerCase().includes(q)||t.user.toLowerCase().includes(q))); };
+function fillTrades(){
+  const b=$("body"); if(!b) return; const rows=tradeRows(), pages=Math.max(1,Math.ceil(rows.length/PER)); st.tf.p=Math.min(st.tf.p,pages-1);
+  const page=rows.slice(st.tf.p*PER,(st.tf.p+1)*PER);
+  b.innerHTML=rows.length?`<div class="tbl"><table><thead><tr><th>Time</th><th>User</th><th>Asset</th><th>Side</th><th class="n">Stake</th><th>Dur</th><th>Status</th><th class="n">Result</th><th></th></tr></thead><tbody>`+
+    page.map(t=>`<tr><td>${dt(t.start)}</td><td>${esc(t.user)}<br><small class="muted">${esc(t.email)}</small></td><td>${esc(t.asset)}</td><td class="${t.dir==="up"?"ok":"bad"}">${t.dir==="up"?"↑ Up":"↓ Down"}</td><td class="n">${fmt(t.amt)}</td><td>${fdur(t.dur)}${t.rf?" · RF":""}</td>
+      <td><span class="badge ${t.status==="win"?"ok":t.status==="loss"?"bad":t.status==="open"?"warn":""}">${t.status}</span></td><td class="n ${t.result>0?"ok":t.result<0?"bad":""}">${t.status==="open"?"…":(t.result>0?"+":"")+fmt(t.result)}</td>
+      <td>${t.status==="open"?`<button class="btn sm" data-act="refund" data-e="${esc(t.email)}" data-id="${esc(t.id)}">Cancel &amp; refund</button>`:""}</td></tr>`).join("")+`</tbody></table></div>
+    <div class="pager"><span>${rows.length} trades · page ${st.tf.p+1} of ${pages}</span><button class="btn sm" data-act="tpage" data-dir="-1" ${st.tf.p?"":"disabled"}>Prev</button><button class="btn sm" data-act="tpage" data-dir="1" ${st.tf.p<pages-1?"":"disabled"}>Next</button></div>`
+    :'<div class="card empty">No trades match.</div>';
+}
+function exportTrades(){ loadAll(); csv([["time","user","email","asset","side","stake","duration","status","result"],...tradeRows().map(t=>[dt(t.start),t.user,t.email,t.asset,t.dir,t.amt,t.dur,t.status,t.result??""])],"trades.csv"); }
+function doRefund(email,id){
+  if(!confirm("Cancel this open trade and refund the stake?")) return;
+  let ok=false; mutate(()=>{ const u=DB.users[email], t=u&&u.trades.find(x=>x.id===id); if(!t||t.status!=="open") return false; t.status="refund"; t.result=0; t.close=t.entry; u.accounts[t.acct]=r2(u.accounts[t.acct]+t.amt); ok=true; },null);
+  if(ok){ audit(`Cancelled open trade ${id} of ${email} (stake refunded)`); toast("Trade cancelled and refunded"); } renderSide(); fillTrades();
+}
+function pTx(){
+  loadAll();
+  $("main").innerHTML=head("Transactions","Deposits, withdrawals, resets and admin adjustments")+
+    `<div class="bar"><input id="xq" placeholder="Search user" value="${esc(st.xf.q)}"><select id="xt"><option value="all">All types</option><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="adjust">Admin adjustment</option><option value="reset">Reset</option></select></div><div id="body"></div>`;
+  $("xt").value=st.xf.type; $("xq").oninput=e=>{ st.xf.q=e.target.value; st.xf.p=0; fillTx(); }; $("xt").onchange=e=>{ st.xf.type=e.target.value; st.xf.p=0; fillTx(); }; fillTx();
+}
+function fillTx(){
+  const b=$("body"); if(!b) return; const q=st.xf.q.trim().toLowerCase();
+  const rows=allTx().filter(x=>(st.xf.type==="all"||x.type===st.xf.type)&&(!q||x.email.toLowerCase().includes(q)||x.user.toLowerCase().includes(q)));
+  const pages=Math.max(1,Math.ceil(rows.length/PER)); st.xf.p=Math.min(st.xf.p,pages-1); const page=rows.slice(st.xf.p*PER,(st.xf.p+1)*PER);
+  b.innerHTML=rows.length?`<div class="tbl"><table><thead><tr><th>Time</th><th>User</th><th>Type</th><th>Account</th><th>Note</th><th class="n">Amount</th></tr></thead><tbody>`+
+    page.map(x=>`<tr><td>${dt(x.time)}</td><td>${esc(x.user)}<br><small class="muted">${esc(x.email)}</small></td><td>${esc(x.type)}</td><td>${esc(x.acct)}</td><td>${esc(x.note)}</td><td class="n ${x.amt>=0?"ok":"bad"}">${x.amt>=0?"+":"−"}${fmt(Math.abs(x.amt))}</td></tr>`).join("")+`</tbody></table></div>
+    <div class="pager"><span>${rows.length} records · page ${st.xf.p+1} of ${pages}</span><button class="btn sm" data-act="xpage" data-dir="-1" ${st.xf.p?"":"disabled"}>Prev</button><button class="btn sm" data-act="xpage" data-dir="1" ${st.xf.p<pages-1?"":"disabled"}>Next</button></div>`
+    :'<div class="card empty">No transactions.</div>';
+}
+
+// =====================================================================
+// assets
+// =====================================================================
+function pAssets(){
+  loadAll(); const tr=allTrades(), by={}; for(const t of tr){ const a=by[t.asset]=by[t.asset]||{n:0,v:0}; a.n++; a.v+=t.amt; }
+  $("main").innerHTML=head("Assets & payouts","Enable or disable instruments, set payout percentages and market volatility",`<button class="btn primary" data-act="saveAssets">Save changes</button>`)+
+    `<div class="tbl"><table><thead><tr><th>Asset</th><th>Category</th><th>Enabled</th><th>Payout %</th><th>Volatility ×</th><th class="n">Trades</th><th class="n">Volume</th></tr></thead><tbody>`+
+    Object.entries(ASSETS).map(([n,[cat,pay]])=>{ const o=CFG.assets[n]||{};
+      return `<tr data-a="${esc(n)}"><td><b>${esc(n)}</b></td><td>${cat}</td><td><span class="sw ${o.on===false?"":"on"}" data-act="sw" data-k="on"></span></td>
+        <td><input type="number" min="50" max="95" step="1" value="${Math.round((o.pay||pay)*100)}" data-k="pay" style="width:90px"></td>
+        <td><input type="number" min="0.2" max="5" step="0.1" value="${o.volx||1}" data-k="volx" style="width:90px"></td>
+        <td class="n">${by[n]?.n||0}</td><td class="n">${fmt(by[n]?.v||0)}</td></tr>`; }).join("")+`</tbody></table></div>
+    <p class="note" style="margin-top:12px">Payout applies to new trades (open trades keep the payout they were placed with). Volatility scales how fast a price moves. Disabled assets disappear from the player market immediately.</p>`;
+}
+function saveAssets(){
+  const out={}; let bad="";
+  document.querySelectorAll("tr[data-a]").forEach(tr=>{
+    const n=tr.dataset.a, on=tr.querySelector('[data-k=on]').classList.contains("on"), pay=parseFloat(tr.querySelector('[data-k=pay]').value), vx=parseFloat(tr.querySelector('[data-k=volx]').value);
+    if(!(pay>=50&&pay<=95)) bad=n+": payout must be between 50 and 95."; if(!(vx>=.2&&vx<=5)) bad=n+": volatility must be between 0.2 and 5.";
+    out[n]={on,pay:pay/100,volx:vx};
+  });
+  if(bad) return toast(bad,true);
+  if(!Object.values(out).some(o=>o.on)) return toast("At least one asset must stay enabled.",true);
+  CFG=readFresh(); CFG.assets=out; saveCfg(); audit("Updated assets & payouts"); toast("Assets saved. Live on the platform.");
+}
+
+// =====================================================================
+// platform settings
+// =====================================================================
+const SECTIONS=[
+ ["Access",[["signup","bool","New registrations","Allow new players to sign up"],["guest","bool","Guest access","Allow “Continue as guest”"]]],
+ ["Trading rules",[["minStake","num","Minimum stake (AED)","",0.01,1e6],["maxStake","num","Maximum stake (AED)","",1,1e7],["durs","durs","Allowed durations","Players can only choose these"],
+   ["orderOn","bool","Pending orders","Order switch on the trading panel"],["orderTtl","num","Order expiry (minutes)","Unfilled orders return the stake",1,120],
+   ["rfOn","bool","Risk-free trades","Stake refunded on a loss"],["rfPerDay","num","Risk-free per day","Per player",0,100],["rfMaxStake","num","Risk-free max stake (AED)","",1,1e6]]],
+ ["CFD / Forex terminal",[["cfdOn","bool","Terminal enabled","Show the Exness-style CFD terminal to players"],["copyOn","bool","Copy trading","Allow players to copy simulated strategies"],
+   ["cfdStart","num","Default starting balance (USD)","Preselected for new trading accounts",100,1e7],["cfdMaxLev","num","Maximum leverage (1:x)","Players can choose up to this value",1,2000],
+   ["cfdMaxLots","num","Maximum volume (lots)","Per order",0.01,1000],["marginCall","num","Margin call level (%)","Players are warned below this margin level",10,500],["stopOut","num","Stop-out level (%)","Worst position is closed automatically at or below this level",0,100]]],
+ ["Wallet & balances",[["startDemo","num","Starting Demo balance (AED)","Used for new accounts and resets",0,1e8],["startPractice","num","Starting Practice balance (AED)","",0,1e8],
+   ["testFundsOn","bool","“Add test funds” button","Let players top up instantly"],["testFunds","num","Test funds amount (AED)","",1,1e7],
+   ["depositOn","bool","Deposits","Wallet deposit tab"],["withdrawOn","bool","Withdrawals","Wallet withdraw tab"],["txMax","num","Max per transaction (AED)","",1,1e8]]],
+ ["Notices",[["banner","text","Announcement banner","Shown at the top of the platform. Leave empty to hide."],["bannerType","sel","Banner style","",["info","warn","alert"]],
+   ["maintenance","bool","Maintenance mode","Blocks the whole platform with a message"],["maintMsg","text","Maintenance message",""]]],
+];
+function pCfg(){
+  loadAll();
+  const ctl=([k,t,l,h,a,b])=>{ const v=CFG[k];
+    const inp=t==="bool"?`<span class="sw ${v?"on":""}" data-act="sw" data-k="${k}"></span>`
+      :t==="num"?`<input type="number" data-k="${k}" min="${a}" max="${b}" step="any" value="${v}">`
+      :t==="text"?`<input type="text" data-k="${k}" value="${esc(v)}" style="width:300px;max-width:100%">`
+      :t==="sel"?`<select data-k="${k}">${a.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("")}</select>`
+      :`<div class="chips" data-k="${k}">${ALL_DURS.map(d=>`<label><input type="checkbox" value="${d}" ${(v||[]).includes(d)?"checked":""}>${fdur(d)}</label>`).join("")}</div>`;
+    return `<div class="frow"><div><b>${l}</b>${h?`<small>${h}</small>`:""}</div><div>${inp}</div></div>`; };
+  $("main").innerHTML=head("Platform settings","Changes apply to every open platform tab instantly",`<button class="btn" data-act="resetCfg">Restore defaults</button><button class="btn primary" data-act="saveCfgForm">Save settings</button>`)+
+    SECTIONS.map(([t,f])=>`<div class="card sect"><h2>${t}</h2>${f.map(ctl).join("")}</div>`).join("");
+}
+function saveCfgForm(){
+  const next=readFresh(); let bad="";
+  document.querySelectorAll("#main [data-k]").forEach(el=>{
+    const k=el.dataset.k; if(el.classList.contains("sw")) next[k]=el.classList.contains("on");
+    else if(el.classList.contains("chips")) next[k]=[...el.querySelectorAll("input:checked")].map(i=>+i.value);
+    else if(el.type==="number"){ const v=parseFloat(el.value); if(!(v>=+el.min&&v<=+el.max)) bad=`${k}: enter a number between ${el.min} and ${el.max}.`; next[k]=v; }
+    else next[k]=el.value;
+  });
+  if(!bad&&!next.durs.length) bad="Select at least one duration.";
+  if(!bad&&next.minStake>next.maxStake) bad="Minimum stake cannot exceed maximum stake.";
+  if(!bad&&next.stopOut>=next.marginCall) bad="Stop-out level must be lower than the margin call level.";
+  if(!bad&&next.maintenance&&!String(next.maintMsg).trim()) bad="Enter a maintenance message.";
+  if(bad) return toast(bad,true);
+  const changed=Object.keys(next).filter(k=>k!=="assets"&&JSON.stringify(next[k])!==JSON.stringify(CFG[k]));
+  CFG=next; saveCfg(); audit("Updated settings: "+(changed.join(", ")||"no changes")); toast("Settings saved. Live on the platform.");
+}
+function resetCfg(){ if(!confirm("Restore all platform settings (including asset payouts) to defaults?")) return; CFG={...DEF,assets:{}}; saveCfg(); audit("Restored default settings"); pCfg(); toast("Defaults restored"); }
+
+// =====================================================================
+// activity log, backup, account
+// =====================================================================
+function pLog(){
+  loadAll();
+  $("main").innerHTML=head("Activity log","Admin actions and player events")+
+    `<div class="bar"><select id="lt"><option value="admin">Admin audit trail</option><option value="events">Player events</option></select></div><div id="body"></div>`;
+  $("lt").value=st.lt; $("lt").onchange=e=>{ st.lt=e.target.value; fillLog(); }; fillLog();
+}
+function fillLog(){
+  const b=$("body"); if(!b) return; const rows=st.lt==="admin"?(A.log||[]).map(x=>({t:x.t,a:"admin",m:x.msg})):DB.events.map(x=>({t:x.t,a:x.type,m:x.msg+(x.who?" · "+x.who:"")}));
+  b.innerHTML=rows.length?`<div class="tbl"><table><thead><tr><th>Time</th><th>Type</th><th>Detail</th></tr></thead><tbody>${rows.slice(0,200).map(r=>`<tr><td>${dt(r.t)}</td><td><span class="badge">${esc(r.a)}</span></td><td style="white-space:normal">${esc(r.m)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="card empty">Nothing recorded yet.</div>';
+}
+function pBackup(){
+  loadAll();
+  $("main").innerHTML=head("Backup & data","Export, restore or reset platform data stored in this browser")+
+    `<div class="grid kpis"><div class="card"><h2>Export</h2><p class="muted" style="margin:6px 0 14px">Download all users, trades and settings as a JSON file.</p><button class="btn primary" data-act="exportAll">Download backup</button></div>
+     <div class="card"><h2>Restore</h2><p class="muted" style="margin:6px 0 14px">Replace current data with a backup file. This overwrites everything.</p><button class="btn" data-act="pickImport">Choose backup file…</button><input type="file" id="impFile" accept="application/json" hidden></div>
+     <div class="card"><h2>Danger zone</h2><p class="muted" style="margin:6px 0 14px">Delete all player accounts and trades. Settings are kept.</p><button class="btn danger" data-act="wipeUsers">Delete all users</button></div></div>
+     <p class="note">Data lives in this browser's local storage, so this console manages the players who used the platform in this same browser profile and address.</p>`;
+  $("impFile").onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{ const j=JSON.parse(await f.text()); if(!j.db||!j.db.users) throw 0;
+      if(!confirm("Restore this backup? Current users and settings will be replaced.")) return;
+      DB=j.db; DB.session=null; DB.events=DB.events||[]; saveDB(); CFG={...DEF,...(j.cfg||{})}; CFG.assets=(j.cfg&&j.cfg.assets)||{}; saveCfg(); audit("Restored backup"); toast("Backup restored"); renderSide();
+    }catch(err){ toast("That file is not a valid Xtrade backup.",true); }
+  };
+}
+function wipeUsers(){
+  if(!confirm("Delete ALL player accounts, trades and transactions?")) return;
+  if(prompt('Type DELETE to confirm')!=="DELETE") return toast("Cancelled");
+  loadAll(); DB.users={}; DB.session=null; DB.events=[]; saveDB(); audit("Deleted all users"); toast("All users deleted"); renderSide();
+}
+function pAcct(){
+  loadAll();
+  $("main").innerHTML=head("Admin account","Credentials for this console, separate from player accounts")+
+    `<div class="card" style="max-width:520px"><form data-form="acct" style="display:grid;gap:14px"><label>Current password<input name="old" type="password" autocomplete="current-password"></label>
+      <label>New username<input name="user" value="${esc(A.user)}" autocomplete="username"></label>
+      <label>New password <small>(min 8 characters, leave blank to keep current)</small><input name="pw" type="password" autocomplete="new-password"></label>
+      <label>Confirm new password<input name="pw2" type="password" autocomplete="new-password"></label>
+      <div class="err" id="m_err"></div><button class="btn primary" type="submit" style="justify-self:start">Save credentials</button></form></div>`;
+}
+FORM.acct=async f=>{
+  const err=m=>$("m_err").textContent=m; loadAll();
+  if(await hash(f.old.value)!==A.pass) return err("Current password is incorrect.");
+  const user=f.user.value.trim(); if(user.length<3) return err("Username needs 3+ characters.");
+  if(f.pw.value){ if(f.pw.value.length<8) return err("New password needs 8+ characters."); if(f.pw.value!==f.pw2.value) return err("Passwords do not match."); A.pass=await hash(f.pw.value); A.def=false; }
+  A.user=user; saveA(); audit("Changed admin credentials"); toast("Credentials updated"); err(""); f.reset(); pAcct();
+};
+
+// =====================================================================
+// boot
+// =====================================================================
+(async()=>{ await ensureAdmin(); if(sessionOk()) enter(); })();
+
+// loading screen
+(function(){
+  const steps=[["Connecting to console…",30],["Loading platform data…",60],["Checking admin session…",90],["Ready",100]];
+  let i=0;
+  (function next(){
+    const [msg,pct]=steps[i++]; $("ldMsg").textContent=msg; $("ldFill").style.width=pct+"%";
+    if(i<steps.length) setTimeout(next,i===steps.length-1?450:380);
+    else setTimeout(()=>{ $("splash").classList.add("done"); setTimeout(()=>$("splash").remove(),600); },350);
+  })();
+})();
+</script>
+</body>
+</html>
